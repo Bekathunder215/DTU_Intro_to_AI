@@ -1,43 +1,46 @@
-# Example file showing a circle moving on screen
 import pygame
+import numpy as np
 
-# pygame setup
+# Constants
+GRID_SIZE = 4
+CELL_SIZE = 100
+GAP_SIZE = 10
+WIDTH = HEIGHT = GRID_SIZE * (CELL_SIZE + GAP_SIZE) + GAP_SIZE
+BACKGROUND_COLOR = (187, 173, 160)
+CELL_COLOR = {0: (205, 193, 180), 2: (238, 228, 218), 4: (237, 224, 200)}  # Add more colors later
+TEXT_COLOR = (119, 110, 101)
+
+# Initialize pygame
 pygame.init()
-screen = pygame.display.set_mode((1280, 720))
-clock = pygame.time.Clock()
-running = True
-dt = 0
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("2048 Game")
+font = pygame.font.Font(None, 50)
 
-player_pos = pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2)
+# Initialize grid
+grid = np.zeros((GRID_SIZE, GRID_SIZE), dtype=int)
 
-while running:
-    # poll for events
-    # pygame.QUIT event means the user clicked X to close your window
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+def draw_grid():
+    screen.fill(BACKGROUND_COLOR)
+    for row in range(GRID_SIZE):
+        for col in range(GRID_SIZE):
+            value = grid[row, col]
+            color = CELL_COLOR.get(value, (237, 204, 97))  # Default color for larger numbers
+            x, y = col * (CELL_SIZE + GAP_SIZE) + GAP_SIZE, row * (CELL_SIZE + GAP_SIZE) + GAP_SIZE
+            pygame.draw.rect(screen, color, (x, y, CELL_SIZE, CELL_SIZE), border_radius=5)
+            if value > 0:
+                text = font.render(str(value), True, TEXT_COLOR)
+                text_rect = text.get_rect(center=(x + CELL_SIZE // 2, y + CELL_SIZE // 2))
+                screen.blit(text, text_rect)
 
-    # fill the screen with a color to wipe away anything from last frame
-    screen.fill("purple")
+def main():
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        draw_grid()
+        pygame.display.flip()
+    pygame.quit()
 
-    pygame.draw.circle(screen, "red", player_pos, 40)
-
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_w]:
-        player_pos.y -= 300 * dt
-    if keys[pygame.K_s]:
-        player_pos.y += 300 * dt
-    if keys[pygame.K_a]:
-        player_pos.x -= 300 * dt
-    if keys[pygame.K_d]:
-        player_pos.x += 300 * dt
-
-    # flip() the display to put your work on screen
-    pygame.display.flip()
-
-    # limits FPS to 60
-    # dt is delta time in seconds since last frame, used for framerate-
-    # independent physics.
-    dt = clock.tick(60) / 1000
-
-pygame.quit()
+if __name__ == "__main__":
+    main()
