@@ -66,4 +66,3 @@ class Game:
             self.moves +=1
             self.score = self.score_function()
             self.add_tile()
-        print(self.grid)
