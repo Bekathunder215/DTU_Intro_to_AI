@@ -14,6 +14,8 @@ class Game:
     def resetgame(self):
         self.grid = np.zeros((GRID_SIZE, GRID_SIZE), dtype=int)
         self.grid[GRID_SIZE-1, GRID_SIZE-1] = 2
+        self.moves = 0
+        self.score = 0
 
     def add_tile(self):
         empty_cells = [(r, c) for r in range(GRID_SIZE) for c in range(GRID_SIZE) if self.grid[r, c] == 0]

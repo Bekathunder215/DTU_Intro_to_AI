@@ -12,7 +12,7 @@ class UI:
         self.button_font = pygame.font.Font(None, 30)
         self.game = game
         self.start_time = None
-        self.moves = 0
+        self.moves = game.moves
 
     def draw_grid(self):
         self.screen.fill(BACKGROUND_COLOR)
@@ -43,7 +43,7 @@ class UI:
     def reset(self):
         self.game.__init__()
         self.start_time = None
-        self.moves = 0
+        self.moves = self.game.moves
     
     def benchmark(self):
         if self.start_time is None:
