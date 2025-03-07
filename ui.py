@@ -30,12 +30,10 @@ class UI:
         rect = pygame.Rect(x, y, width, height)
         pygame.draw.rect(self.screen, color, rect, border_radius=5)
 
-        # Render text
-        text_surf = self.font.render(text, True, (0, 0, 0))  # Black text
+        text_surf = self.font.render(text, True, (0, 0, 0))  
         text_rect = text_surf.get_rect(center=rect.center)
         self.screen.blit(text_surf, text_rect)
 
-        # Check for click event
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONDOWN and rect.collidepoint(event.pos):
                 if action:
