@@ -21,6 +21,7 @@ def main():
                     game.move("up")
                 elif event.key == pygame.K_DOWN:
                     game.move("down")
+                ui.moves += 1
         ui.update()
     pygame.quit()
     
