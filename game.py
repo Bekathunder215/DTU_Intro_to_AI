@@ -4,13 +4,16 @@ from constants import GRID_SIZE, CELL_SIZE, GAP_SIZE, WIDTH, HEIGHT, BACKGROUND_
 
 class Game:
     def __init__(self):
-        self.grid = np.zeros((GRID_SIZE, GRID_SIZE), dtype=int)
-        self.grid[GRID_SIZE-1, GRID_SIZE-1] = 2
         self.score = 0
         self.moves = 0
+        self.resetgame()
     
     def score_function(self):
         return np.sum(self.grid)
+
+    def resetgame(self):
+        self.grid = np.zeros((GRID_SIZE, GRID_SIZE), dtype=int)
+        self.grid[GRID_SIZE-1, GRID_SIZE-1] = 2
 
     def add_tile(self):
         empty_cells = [(r, c) for r in range(GRID_SIZE) for c in range(GRID_SIZE) if self.grid[r, c] == 0]

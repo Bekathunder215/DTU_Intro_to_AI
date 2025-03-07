@@ -41,7 +41,7 @@ class UI:
 
 
     def reset(self):
-        self.game.grid = np.zeros((GRID_SIZE,GRID_SIZE), dtype=int)
+        self.game.__init__()
         self.start_time = None
         self.moves = 0
     
