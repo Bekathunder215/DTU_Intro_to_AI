@@ -4,28 +4,55 @@ import numpy as np
 from constants import GRID_SIZE, CELL_SIZE, GAP_SIZE, WIDTH, HEIGHT, BACKGROUND_COLOR, TEXT_COLOR, CELL_COLOR
 
 class Game:
-    def __init__(self):
+    def __init__(self) -> None:
+        """
+        Initialize the game with a score, move counter, and starting grid configuration.
+        """
         self.score = 0
         self.moves = 0
         self.grid = np.zeros((GRID_SIZE, GRID_SIZE), dtype=int)
         self.grid[GRID_SIZE-1, GRID_SIZE-1] = 2
         self.resetgame()
     
-    def score_function(self, grid):
+    def score_function(self, grid: np.ndarray) -> int:
+        """
+        Calculate the score based on the highest tile and the number of empty cells.
+        
+        Args:
+            grid (np.ndarray): The current game grid.
+        
+        Returns:
+            int: The calculated score.
+        """
         empty_cells = np.sum(grid == 0)  # Count empty tiles
         max_tile = np.max(grid)  # Highest tile
         return max_tile + empty_cells * 10  # Reward empty spaces
 
-    def resetgame(self):
+    def resetgame(self) -> None:
+        """
+        Reset the game by clearing the grid, resetting the score and move counter.
+        """
         self.grid = np.zeros((GRID_SIZE, GRID_SIZE), dtype=int)
         self.grid[GRID_SIZE-1, GRID_SIZE-1] = 2
         self.moves = 0
         self.score = 0
 
-    def get_tile_spawn_probabilities(self, grid):
+    def get_tile_spawn_probabilities(self, grid: np.ndarray) -> list[tuple[int, float]]:
+        """
+        Get the probabilities of spawning different tile values.
+        
+        Args:
+            grid (np.ndarray): The current game grid.
+        
+        Returns:
+            list[tuple[int, float]]: A list of tuples containing tile values and their spawn probabilities.
+        """
         return [(2, 0.9), (4, 0.1)]
 
-    def add_tile(self):
+    def add_tile(self) -> None:
+        """
+        Add a new tile (2 or 4) to a random empty cell based on predefined probabilities.
+        """
         empty_cells = [(r, c) for r in range(GRID_SIZE) for c in range(GRID_SIZE) if self.grid[r, c] == 0]
         
         if empty_cells:
@@ -44,7 +71,17 @@ class Game:
                     self.grid[r, c] = tile_value
                     break
 
-    def slide_and_merge(self, row):
+    def slide_and_merge(self, row: list[int]) -> np.ndarray:
+        """
+        Perform the slide and merge operation on a single row.
+        
+        Args:
+            row (list[int]): A list representing a row of the grid.
+        
+        Returns:
+            np.ndarray: The processed row after sliding and merging.
+        """
+
         # Convert the row to a NumPy array
         row = np.array(row, dtype=np.int16)
         
@@ -68,7 +105,13 @@ class Game:
         # Return the new row filled with zeros to match GRID_SIZE
         return np.pad(new_row, (0, len(row) - len(new_row)), mode='constant').astype(np.int16)
 
-    def move(self, direction):
+    def move(self, direction: str) -> None:
+        """
+        Move tiles in the given direction, merge tiles where possible, and add a new tile.
+        
+        Args:
+            direction (str): The direction of the move ('left', 'right', 'up', 'down').
+        """
         old_grid = self.grid.copy()
         rotations = {"left": 0, "up": 1, "right": 2, "down": 3}
         
@@ -86,7 +129,14 @@ class Game:
             print("Game Over! Resetting the game.")
             self.resetgame()  # Reset the game if no moves are available
     
-    def game_over(self):
+    def game_over(self) -> bool:
+        """
+        Check if the game is over, meaning no moves are left.
+        
+        Returns:
+            bool: True if no moves are possible, otherwise False.
+        """
+
         # Check for empty cells
         if np.any(self.grid == 0):
             return False
