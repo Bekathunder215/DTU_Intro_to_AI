@@ -4,8 +4,7 @@ import time
 from constants import GRID_SIZE, CELL_SIZE, GAP_SIZE, WIDTH, HEIGHT, BACKGROUND_COLOR, TEXT_COLOR, CELL_COLOR
 
 class UI:
-    def __init__(self, game):
-        pygame.init()
+    def __init__(self, game, ai):
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT + 100))
         pygame.display.set_caption("2048 Game")
         self.font = pygame.font.Font(None, 50)
@@ -13,6 +12,8 @@ class UI:
         self.game = game
         self.start_time = None
         self.moves = game.moves
+        self.miniai = ai
+        self.ai_running = False
 
     def draw_grid(self):
         self.screen.fill(BACKGROUND_COLOR)
@@ -35,15 +36,17 @@ class UI:
         text_rect = text_surf.get_rect(center=rect.center)
         self.screen.blit(text_surf, text_rect)
 
-        if pygame.mouse.get_pressed()[0] and rect.collidepoint(pygame.mouse.get_pos()):
+        if rect.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
             if action:
                 action()
-
-
+                pygame.time.wait(150)  # Small delay to prevent multiple calls
+            
     def reset(self):
         self.game.__init__()
         self.start_time = None
         self.moves = self.game.moves
+        if self.ai_running:
+            self.ai_toggle()
     
     def benchmark(self):
         if self.start_time is None:
@@ -52,13 +55,21 @@ class UI:
         elapsed = time.time() - self.start_time
         print(f"Time: {elapsed:.2f} sec, Moves: {self.moves}")
     
-    def ai(self):
-        print("USE AI")
+    def ai_toggle(self):
+        self.ai_running = not self.ai_running
+        if self.ai_running:
+            print("Enabled")
+            pygame.display.set_caption("2048 Game (AI Enabled)")
+        else:
+            print("Disabled")
+            pygame.display.set_caption("2048 Game")
+
 
     def update(self):
         self.draw_grid()
-        self.draw_button("Use AI", 50, HEIGHT + 20, 100, 50, (150, 150, 255), self.ai)
+        self.draw_button("Use AI", 50, HEIGHT + 20, 100, 50, (150, 150, 255), self.ai_toggle)
         self.draw_button("Reset", WIDTH // 2 - 50, HEIGHT + 20, 100, 50, (255, 100, 100), self.reset)
         self.draw_button("Benchmark", WIDTH - 150, HEIGHT + 20, 120, 50, (100, 255, 100), self.benchmark)
+
         pygame.display.flip()
 
