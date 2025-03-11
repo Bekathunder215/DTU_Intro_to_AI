@@ -1,6 +1,7 @@
 from multiprocessing import Pool
 from multiprocessing.pool import ThreadPool
 import numpy as np
+from typing import Optional, Tuple
 from constants import GRID_SIZE, CELL_SIZE, GAP_SIZE, WIDTH, HEIGHT, BACKGROUND_COLOR, TEXT_COLOR, CELL_COLOR
 
 class Game:
@@ -151,22 +152,52 @@ class Game:
         return True
 
 class AI:
-    def __init__(self, game):
-        self.game = game
-        self.perfectsnake = np.array(([2, 2**2, 2**3, 2**4],[2**8, 2**7, 2**6, 2**5],[2**9, 2**10, 2**11, 2**12],[2**16, 2**15, 2**14, 2**13]))
-        self.directions = {0 : "left", 1 : "up", 2 : "right",3 : "down"}
-        self.directions_list = [ "left",  "up",  "right", "down"]
+    """
+    AI class implementing Minimax and heuristic-based decision-making for the 2048 game.
+    The AI selects the best move to maximize score and survival using evaluation functions.
+    """
+    
+    def __init__(self, game: "Game2048"):
+        """
+        Initializes the AI with a reference to the game instance and predefined move directions.
 
-    def random_move(self):
+        Args:
+            game (Game2048): The 2048 game instance.
+        """
+        self.game = game
+        self.perfectsnake = np.array((
+            [2, 2**2, 2**3, 2**4], 
+            [2**8, 2**7, 2**6, 2**5], 
+            [2**9, 2**10, 2**11, 2**12], 
+            [2**16, 2**15, 2**14, 2**13]
+        ))
+        self.directions = {0: "left", 1: "up", 2: "right", 3: "down"}
+        self.directions_list = ["left", "up", "right", "down"]
+
+    def random_move(self) -> None:
+        """Performs a random move by selecting a direction at random."""
         self.game.move(self.directions[np.random.randint(0,4)])
 
-    def calc_move(self, grid):
-        # best_dir = self.find_best_move_mult(grid, depth=5)
-        # best_dir = self.find_best_move_mult_thread(depth=4, threads = 4)
+    def calc_move(self, grid: np.ndarray) -> None:
+        """Calculates and executes the best move using the Minimax algorithm with a given depth."""
         best_dir = self.find_best_move(grid, depth=4)
         self.game.move(best_dir)
 
-    def evaluate(self,grid): #heuristic
+    def evaluate(self, grid: np.ndarray) -> float:
+        """
+        Heuristic evaluation function that assigns a score to a given grid state.
+        
+        The evaluation considers:
+        - Smoothness: Penalizes rough transitions between adjacent tiles.
+        - Tile arrangement: Rewards a snake-like structure for better merging potential.
+        - Empty spaces: Rewards having more empty cells.
+        - Merge potential: Encourages tiles that can merge.
+        - Max tile placement: Penalizes if the highest tile is not in the bottom row.
+        - Row sorting: Rewards if the last row is sorted in descending order.
+        
+        Returns:
+            float: The computed heuristic score for the given grid state.
+        """
         smoothness_score = -np.sum(np.abs(np.diff(grid)))  # Penalize rough transitions
         perfection = np.sum(self.perfectsnake * grid)  # Reward snake-like structure
         
@@ -196,7 +227,20 @@ class AI:
 
         return max(perfection + smoothness_score + empty_score + merge_bonus + penalty_max + penalty_second_max + sorted_bonus, 0)  # Slightly boost the heuristic
     
-    def simulate_move(self, grid, move):
+    def simulate_move(self, grid: np.ndarray, move: str) -> Optional[np.ndarray]:
+        """
+        Simulates a move without modifying the actual game state.
+        
+        This method applies the given move, slides and merges the tiles, 
+        and returns the resulting grid.
+        
+        Args:
+            grid (np.ndarray): The current game grid.
+            move (str): The direction of the move ('left', 'up', 'right', 'down').
+        
+        Returns:
+            np.ndarray or None: The new grid if the move is valid; otherwise, None.
+        """
         temp_grid = grid.copy()
         rotations = {"left": 0, "up": 1, "right": 2, "down": 3}
         
@@ -209,7 +253,23 @@ class AI:
             return temp_grid
         return None
     
-    def minimax(self, grid, depth, maximizing_player=False, alpha=-np.inf, beta=np.inf):
+    def minimax(self, grid: np.ndarray, depth: int, maximizing_player: bool = False, alpha: float = -np.inf, beta: float = np.inf) -> float:
+        """
+        Minimax algorithm with alpha-beta pruning to determine the best move.
+        
+        If maximizing, it simulates the player's move; if minimizing, it considers random tile spawns.
+        
+        Args:
+            grid (np.ndarray): The current game grid.
+            depth (int): The search depth.
+            maximizing_player (bool): True if evaluating player moves, False if evaluating AI-generated tiles.
+            alpha (float): Alpha value for pruning.
+            beta (float): Beta value for pruning.
+        
+        Returns:
+            float: The evaluated score of the grid state.
+        """
+
         if depth == 0:
             return self.evaluate(grid)
         
@@ -242,8 +302,20 @@ class AI:
                         break
             return total_evaluation / len(empty_cells)
 
-    def find_best_move_mult(self, grid, depth=3):
-        """modified for multiprocessing"""
+    def find_best_move_mult(self, grid: np.ndarray, depth: int = 3) -> str:
+        """
+        Finds the best move using Minimax with multiprocessing.
+        
+        Each move is evaluated in parallel using multiple processes to speed up decision-making.
+        
+        Args:
+            grid (np.ndarray): The current game grid.
+            depth (int): The search depth for Minimax.
+        
+        Returns:
+            str: The best move direction ('left', 'up', 'right', 'down').
+        """
+
         best_score = -np.inf
         best_move = None
         pool = Pool(4) # 4 directions
@@ -269,40 +341,59 @@ class AI:
 
         return best_move
 
-    def find_best_move_mult_thread(self, depth=3, threads = 4):
-        """modified for multiThreading"""
+    def find_best_move_mult_thread(self, depth: int = 3, threads: int = 4) -> str:
+        """
+        Finds the best move using Minimax with multithreading.
+
+        This method evaluates potential moves using Minimax in parallel threads.
+        
+        Args:
+            depth (int): The search depth for Minimax.
+            threads (int): Number of threads to use for evaluation.
+        
+        Returns:
+            str: The best move direction.
+        """
         best_score = -np.inf
-        best_move = None
+        best_move: Optional[str] = None
+        possible_moves: list[Tuple[str, np.ndarray]] = []
 
-        dirs = []
-
-        for dir in self.directions_list:
-            new_grid = self.simulate_move(self.game.grid, dir)
+        # Generate valid move simulations
+        for direction in self.directions_list:
+            new_grid = self.simulate_move(self.game.grid, direction)
             if new_grid is not None:
-                dirs.append((dir, new_grid))
-            
-        # Define the function to evaluate the move using minimax
-        def minimaxsubfunc(direction_and_grid):
+                possible_moves.append((direction, new_grid))
+
+        # Define the function for evaluating a move
+        def minimax_sub_func(direction_and_grid: Tuple[str, np.ndarray]) -> Tuple[str, float]:
             direction, grid = direction_and_grid
-            return self.minimax(grid, depth - 1, False)
+            return direction, self.minimax(grid, depth - 1, False)
 
-        # Use threading to evaluate moves in parallel
-        with ThreadPool(threads) as executor:
-            results = list(executor.map(minimaxsubfunc, dirs))
+        # Execute minimax evaluations in parallel using threading
+        with ThreadPool(threads) as threads:
+            results = list(threads.map(minimax_sub_func, possible_moves))
 
-        # Find the best move based on Minimax results
-        for i, (dir, _) in enumerate(dirs):
-            score = results[i]
+        # Find the move with the highest score
+        for direction, score in results:
             if score > best_score:
                 best_score = score
-                best_move = dir
+                best_move = direction
 
-        return best_move
+        return best_move if best_move is not None else "left"  # Default to "left" if no valid move is found
     
-    def minimax_worker(self, grid, depth):
-        return self.minimax(grid, depth, maximizing_player=False)
 
-    def find_best_move(self, grid, depth=3):
+    def find_best_move(self, grid: np.ndarray, depth: int = 3) -> str:
+        """
+        Finds the best move by running Minimax for all possible moves.
+        
+        Args:
+            grid (np.ndarray): The current game grid.
+            depth (int): The search depth for Minimax.
+        
+        Returns:
+            str: The best move direction.
+        """
+
         best_score = -np.inf
         best_move = None
         for dir in self.directions_list:
